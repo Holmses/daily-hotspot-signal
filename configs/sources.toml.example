@@ -1,0 +1,136 @@
+[runtime]
+daily_run_time = "09:10"
+timezone = "Asia/Shanghai"
+verify_ssl = false
+
+[paths]
+raw_data_dir = "data/raw"
+processed_data_dir = "data/processed"
+reports_dir = "reports/generated"
+logs_dir = "logs"
+
+[strategy]
+top_n = 10
+history_days = 14
+min_score = 45.0
+fresh_hours = 36
+max_items_per_source = 30
+title_similarity_threshold = 0.62
+
+authority_keywords = [
+  "国务院",
+  "发改委",
+  "工信部",
+  "财政部",
+  "央行",
+  "证监会",
+  "交易所",
+  "最高法",
+  "海关总署",
+  "Reuters",
+  "AP",
+  "SEC",
+  "Federal Reserve",
+]
+
+impact_keywords = [
+  "突发",
+  "首次",
+  "最新",
+  "紧急",
+  "调查",
+  "处罚",
+  "监管",
+  "禁令",
+  "法案",
+  "裁员",
+  "破产",
+  "泄露",
+  "制裁",
+  "关税",
+  "召回",
+  "通报",
+  "新规",
+  "影响",
+]
+
+risk_keywords = [
+  "网传",
+  "爆料",
+  "疑似",
+  "未证实",
+  "内幕",
+  "小道消息",
+  "传闻",
+  "独家猛料",
+]
+
+low_competition_clues = [
+  "公告",
+  "征求意见",
+  "裁判文书",
+  "处罚决定",
+  "招标",
+  "备案",
+  "财报",
+  "监管函",
+  "SEC filing",
+  "consultation",
+]
+
+[[sources]]
+name = "中国政府网要闻"
+url = "https://www.gov.cn/yaowen/liebiao/YAOWENLIEBIAO.json"
+kind = "json"
+category = "official"
+reliability = 0.95
+enabled = true
+max_items = 35
+title_fields = ["TITLE"]
+url_fields = ["URL"]
+summary_fields = ["SUB_TITLE"]
+published_fields = ["DOCRELPUBTIME"]
+
+[[sources]]
+name = "百度热搜"
+url = "https://top.baidu.com/api/board?platform=pc&tab=realtime"
+kind = "json"
+category = "trend"
+reliability = 0.65
+enabled = true
+max_items = 50
+items_path = "data.cards[].content[]"
+title_fields = ["word", "query"]
+url_fields = ["rawUrl", "url"]
+summary_fields = ["desc"]
+heat_fields = ["hotScore"]
+
+[[sources]]
+name = "RSSHub 知乎热榜"
+url = "https://rsshub.app/zhihu/hotlist"
+kind = "rss"
+category = "trend"
+reliability = 0.60
+enabled = false
+
+[[sources]]
+name = "Hacker News Front Page"
+url = "https://news.ycombinator.com/"
+kind = "html"
+category = "technology"
+reliability = 0.55
+enabled = false
+max_items = 20
+html_title_selector = "span.titleline > a"
+
+[[sources]]
+name = "示例 JSON 热榜"
+url = "https://example.com/hot.json"
+kind = "json"
+category = "trend"
+reliability = 0.50
+enabled = false
+items_path = "data.items"
+title_fields = ["title", "name"]
+url_fields = ["url", "link"]
+published_fields = ["published_at", "time"]

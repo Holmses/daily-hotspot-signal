@@ -1,0 +1,17 @@
+services:
+  hotspot-signal-daily:
+    build: .
+    image: daily-hotspot-signal:latest
+    container_name: hotspot-signal-daily
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command:
+      - run-scheduler
+      - --config
+      - ${HOTSPOT_CONFIG:-configs/sources.toml.example}
+    restart: unless-stopped
