@@ -74,6 +74,23 @@ docker compose up -d --build hotspot-signal-daily
 
 如果本机 Python 证书链正常，可以把 `[runtime].verify_ssl` 改成 `true`。当前示例配置设为 `false`，是为了避开本机抓公开网页时常见的 CA 证书错误。
 
+## 飞书通知
+
+和 `a-share-v1-signal` 一样，复制 `.env.example` 为 `.env` 后配置飞书自定义机器人：
+
+```bash
+FEISHU_WEBHOOK=https://open.feishu.cn/open-apis/bot/v2/hook/replace-with-your-hook
+FEISHU_SECRET=
+```
+
+`run-daily` 和 `run-scheduler` 默认会在生成报告后尝试推送飞书；如果没有配置 `FEISHU_WEBHOOK`，会自动跳过。临时禁用通知：
+
+```bash
+.venv/bin/hotspot-signal run-daily \
+  --config configs/sources.toml.example \
+  --no-notify
+```
+
 ## 数据源配置
 
 支持三类公开源：

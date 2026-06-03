@@ -21,6 +21,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_daily = subparsers.add_parser("run-daily", help="Fetch sources, score topics, and write a report once")
     run_daily.add_argument("--config", default="configs/sources.toml.example")
     run_daily.add_argument("--as-of", default=None, help="Report date in ISO format, defaults to today")
+    run_daily.add_argument("--no-notify", action="store_true", help="Skip Feishu notification even when configured")
 
     scheduler = subparsers.add_parser(
         "run-scheduler",
@@ -30,6 +31,7 @@ def _build_parser() -> argparse.ArgumentParser:
     scheduler.add_argument("--run-at", default=None, help="Daily run time, defaults to [runtime].daily_run_time")
     scheduler.add_argument("--timezone", default=None, help="Scheduler timezone, defaults to [runtime].timezone")
     scheduler.add_argument("--run-on-start", action="store_true")
+    scheduler.add_argument("--no-notify", action="store_true", help="Skip Feishu notification even when configured")
 
     return parser
 
@@ -63,7 +65,12 @@ def main() -> int:
         return 0
 
     if args.command == "run-daily":
-        result = run_daily_workflow(config=config, base_dir=base_dir, as_of=args.as_of)
+        result = run_daily_workflow(
+            config=config,
+            base_dir=base_dir,
+            as_of=args.as_of,
+            notify=not args.no_notify,
+        )
         print("Hotspot report generated")
         print(f"sources={result.source_count}")
         print(f"raw_items={result.raw_item_count}")
@@ -72,6 +79,7 @@ def main() -> int:
         print(f"raw_path={result.raw_path}")
         print(f"candidates_path={result.candidates_path}")
         print(f"report_path={result.report_path}")
+        print("feishu=skipped" if result.notification_result is None else f"feishu_status={result.notification_result.status_code}")
         return 0
 
     if args.command == "run-scheduler":
@@ -81,6 +89,7 @@ def main() -> int:
             run_at=args.run_at,
             timezone=args.timezone,
             run_on_start=args.run_on_start,
+            notify=not args.no_notify,
         )
         return 0
 
