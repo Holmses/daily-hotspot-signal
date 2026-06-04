@@ -38,6 +38,10 @@ class StrategyConfig:
     impact_keywords: list[str] = field(default_factory=list)
     risk_keywords: list[str] = field(default_factory=list)
     low_competition_clues: list[str] = field(default_factory=list)
+    hook_keywords: list[str] = field(default_factory=list)
+    audience_keywords: list[str] = field(default_factory=list)
+    seasonal_keywords: list[str] = field(default_factory=list)
+    life_advice_keywords: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -118,6 +122,10 @@ def load_config(config_path: str | Path) -> AppConfig:
         impact_keywords=_list_value(strategy_data, "impact_keywords"),
         risk_keywords=_list_value(strategy_data, "risk_keywords"),
         low_competition_clues=_list_value(strategy_data, "low_competition_clues"),
+        hook_keywords=_list_value(strategy_data, "hook_keywords"),
+        audience_keywords=_list_value(strategy_data, "audience_keywords"),
+        seasonal_keywords=_list_value(strategy_data, "seasonal_keywords"),
+        life_advice_keywords=_list_value(strategy_data, "life_advice_keywords"),
     )
     extra_keywords = os.getenv("HOTSPOT_EXTRA_KEYWORDS", "").strip()
     if extra_keywords:

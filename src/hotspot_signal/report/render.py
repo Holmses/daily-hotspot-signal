@@ -86,7 +86,10 @@ def _render_candidate_detail(rank: int, candidate: TopicCandidate) -> list[str]:
         f"- 推荐角度：{candidate.suggested_angle}",
         f"- 安全提示：{candidate.safety_note}",
         f"- 入选理由：{'; '.join(candidate.reasons) if candidate.reasons else '暂无'}",
+        "- 二创标题模板：",
     ]
+    for title in _creator_titles(candidate.title):
+        lines.append(f"  - {title}")
     if candidate.representative_summary:
         lines.append(f"- 摘要：{candidate.representative_summary}")
     if candidate.links:
@@ -98,6 +101,15 @@ def _render_candidate_detail(rank: int, candidate: TopicCandidate) -> list[str]:
         lines.append(f"  - {query}")
     lines.append("")
     return lines
+
+
+def _creator_titles(title: str) -> list[str]:
+    compact = title.strip()
+    return [
+        f"看到“{compact}”，先别急着转发，真正该注意的是这几点",
+        f"如果你身边有人正遇到这类情况，今天先把“{compact}”讲清楚",
+        f"“{compact}”为什么会上热搜？普通人该怎么判断",
+    ]
 
 
 def _escape(value: str) -> str:

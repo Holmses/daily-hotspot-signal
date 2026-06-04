@@ -78,6 +78,10 @@ def _score_cluster(
     authority_hits = contains_any(combined_text, strategy.authority_keywords)
     low_competition_hits = contains_any(combined_text, strategy.low_competition_clues)
     risk_hits = contains_any(combined_text, strategy.risk_keywords)
+    hook_hits = contains_any(combined_text, strategy.hook_keywords)
+    audience_hits = contains_any(combined_text, strategy.audience_keywords)
+    seasonal_hits = contains_any(combined_text, strategy.seasonal_keywords)
+    life_advice_hits = contains_any(combined_text, strategy.life_advice_keywords)
     recent_hit = any(
         title_similarity(representative.title, recent_title) >= strategy.title_similarity_threshold
         for recent_title in recent_titles
@@ -106,12 +110,19 @@ def _score_cluster(
     )
     reliability_score = min(100.0, max(item.source_reliability for item in cluster.items) * 100.0)
     risk_penalty = _risk_penalty(risk_hits, reliability_score, cluster.items)
+    viewer_interest_bonus = _viewer_interest_bonus(
+        hook_hits=hook_hits,
+        audience_hits=audience_hits,
+        seasonal_hits=seasonal_hits,
+        life_advice_hits=life_advice_hits,
+    )
     total_score = (
         heat_score * 0.25
         + freshness_score * 0.20
         + scarcity_score * 0.25
         + impact_score * 0.20
         + reliability_score * 0.10
+        + viewer_interest_bonus
         - min(30.0, risk_penalty)
     )
 
@@ -135,7 +146,7 @@ def _score_cluster(
         reliability_score=round(reliability_score, 2),
         risk_penalty=round(risk_penalty, 2),
         competition_level=competition_level,
-        safety_note=_safety_note(risk_hits, reliability_score, links),
+        safety_note=_safety_note(risk_hits, reliability_score, links, life_advice_hits),
         suggested_angle=_suggest_angle(
             representative.title,
             competition_level,
@@ -143,6 +154,10 @@ def _score_cluster(
             impact_hits,
             low_competition_hits,
             authority_hits,
+            hook_hits,
+            audience_hits,
+            seasonal_hits,
+            life_advice_hits,
         ),
         verification_queries=_verification_queries(representative.title),
         reasons=_reasons(
@@ -154,6 +169,10 @@ def _score_cluster(
             low_competition_hits=low_competition_hits,
             recent_hit=recent_hit,
             risk_hits=risk_hits,
+            hook_hits=hook_hits,
+            audience_hits=audience_hits,
+            seasonal_hits=seasonal_hits,
+            life_advice_hits=life_advice_hits,
         ),
         source_names=source_names,
         links=links[:5],
@@ -251,9 +270,36 @@ def _risk_penalty(risk_hits: list[str], reliability_score: float, items: list[Ho
     return penalty
 
 
-def _safety_note(risk_hits: list[str], reliability_score: float, links: list[str]) -> str:
+def _viewer_interest_bonus(
+    hook_hits: list[str],
+    audience_hits: list[str],
+    seasonal_hits: list[str],
+    life_advice_hits: list[str],
+) -> float:
+    score = 0.0
+    if hook_hits:
+        score += 6.0
+    if audience_hits:
+        score += 5.0
+    if seasonal_hits:
+        score += 4.0
+    if life_advice_hits:
+        score += 4.0
+    if hook_hits and audience_hits and life_advice_hits:
+        score += 5.0
+    return min(20.0, score)
+
+
+def _safety_note(
+    risk_hits: list[str],
+    reliability_score: float,
+    links: list[str],
+    life_advice_hits: list[str],
+) -> str:
     if risk_hits:
         return f"含传闻风险词：{', '.join(risk_hits[:3])}；只讲已确认事实，不做定性结论。"
+    if life_advice_hits:
+        return "涉及饮食/健康/安全建议，需补营养师、医生、官方科普或原采访来源，不夸大结论。"
     if reliability_score < 55:
         return "来源可信度一般，发布前至少补一个主流媒体或官方来源。"
     if not links:
@@ -268,7 +314,13 @@ def _suggest_angle(
     impact_hits: list[str],
     low_competition_hits: list[str],
     authority_hits: list[str],
+    hook_hits: list[str],
+    audience_hits: list[str],
+    seasonal_hits: list[str],
+    life_advice_hits: list[str],
 ) -> str:
+    if hook_hits and (audience_hits or seasonal_hits) and life_advice_hits:
+        return f"做成“谁在什么时间千万别做什么”：先讲结论，再讲原因和替代方案：{title}"
     if low_competition_hits or category == "official" or authority_hits:
         return f"别只看标题，文件/公告里最容易被忽略的一点：{title}"
     if competition_level == "低":
@@ -297,6 +349,10 @@ def _reasons(
     low_competition_hits: list[str],
     recent_hit: bool,
     risk_hits: list[str],
+    hook_hits: list[str],
+    audience_hits: list[str],
+    seasonal_hits: list[str],
+    life_advice_hits: list[str],
 ) -> list[str]:
     reasons: list[str] = []
     if heat_score >= 75:
@@ -311,6 +367,13 @@ def _reasons(
         reasons.append(f"权威源线索：{', '.join(authority_hits[:2])}")
     if low_competition_hits:
         reasons.append(f"低竞争线索：{', '.join(low_competition_hits[:2])}")
+    if hook_hits:
+        reasons.append(f"强标题钩子：{', '.join(hook_hits[:2])}")
+    if audience_hits or seasonal_hits:
+        matched = ", ".join((audience_hits + seasonal_hits)[:3])
+        reasons.append(f"明确人群/节点：{matched}")
+    if life_advice_hits:
+        reasons.append(f"生活建议线索：{', '.join(life_advice_hits[:2])}")
     if recent_hit:
         reasons.append("历史报告已出现，降低优先级")
     if risk_hits:
