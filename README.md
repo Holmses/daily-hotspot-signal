@@ -71,6 +71,7 @@ docker compose up -d --build hotspot-signal-daily
 ```
 
 默认按 `configs/sources.toml.example` 里的 `[runtime].daily_run_time` 和 `Asia/Shanghai` 时区执行。
+Docker 镜像会直接通过 `PYTHONPATH=/app/src` 运行源码，不在构建阶段执行 `pip install .`，避免服务器访问 PyPI 超时导致构建失败。
 
 如果本机 Python 证书链正常，可以把 `[runtime].verify_ssl` 改成 `true`。当前示例配置设为 `false`，是为了避开本机抓公开网页时常见的 CA 证书错误。
 

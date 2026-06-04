@@ -1,15 +1,13 @@
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src
 
 WORKDIR /app
 
-COPY pyproject.toml README.md /app/
 COPY src /app/src
-
-RUN pip install --no-cache-dir .
 
 WORKDIR /workspace
 
-ENTRYPOINT ["hotspot-signal"]
+ENTRYPOINT ["python", "-m", "hotspot_signal.cli"]
